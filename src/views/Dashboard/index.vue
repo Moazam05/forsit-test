@@ -47,24 +47,20 @@
     <div class="charts">
       <div class="chart-container">
         <h3>Revenue Trends</h3>
-        <div style="width: 100%; height: 300px">
-          <Line
-            v-if="salesChartData"
-            :data="salesChartData"
-            :options="chartOptions"
-          />
-        </div>
+        <LineChart
+          v-if="salesChartData"
+          :chartData="salesChartData"
+          :chartOptions="chartOptions"
+        />
       </div>
 
       <div class="chart-container">
         <h3>Order Trends</h3>
-        <div style="width: 100%; height: 300px">
-          <Bar
-            v-if="orderChartData"
-            :data="orderChartData"
-            :options="chartOptions"
-          />
-        </div>
+        <BarChart
+          v-if="orderChartData"
+          :chartData="orderChartData"
+          :chartOptions="chartOptions"
+        />
       </div>
     </div>
   </div>
@@ -72,31 +68,15 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from "vue";
-import { Line, Bar } from "vue-chartjs";
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-} from "chart.js";
 import { useInventoryStore } from "../../stores/inventory";
-
-// Register Chart.js components
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend
-);
+import LineChart from "./components/LineChart.vue";
+import BarChart from "./components/BarChart.vue";
+import {
+  aggregateData,
+  createRevenueChartData,
+  createOrdersChartData,
+  defaultChartOptions,
+} from "../../utils/ChartUtils.js";
 
 // Get store
 const inventoryStore = useInventoryStore();
@@ -120,16 +100,8 @@ const timeframes = [
   { value: "annually", label: "Annually" },
 ];
 
-// Common chart options
-const chartOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  scales: {
-    y: {
-      beginAtZero: true,
-    },
-  },
-};
+// Chart options
+const chartOptions = defaultChartOptions;
 
 // Filter data based on selected category
 const filteredSalesData = computed(() => {
@@ -140,86 +112,6 @@ const filteredSalesData = computed(() => {
   return data.filter((sale) => sale.category === selectedCategory.value);
 });
 
-// Aggregate data based on timeframe
-const aggregateData = (data, timeframe) => {
-  const aggregated = {};
-
-  data.forEach((sale) => {
-    const date = new Date(sale.date);
-    let key = "";
-
-    switch (timeframe) {
-      case "daily":
-        key = `${date.getFullYear()}-${(date.getMonth() + 1)
-          .toString()
-          .padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}`;
-        break;
-      case "weekly":
-        // Get the week number
-        const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
-        const pastDaysOfYear = (date - firstDayOfYear) / 86400000;
-        const weekNum = Math.ceil(
-          (pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7
-        );
-        key = `${date.getFullYear()}-W${weekNum}`;
-        break;
-      case "monthly":
-        key = `${date.getFullYear()}-${(date.getMonth() + 1)
-          .toString()
-          .padStart(2, "0")}`;
-        break;
-      case "annually":
-        key = `${date.getFullYear()}`;
-        break;
-    }
-
-    if (!aggregated[key]) {
-      aggregated[key] = { revenue: 0, orders: 0 };
-    }
-
-    aggregated[key].revenue += sale.revenue;
-    aggregated[key].orders += sale.quantity;
-  });
-
-  // Sort keys and create arrays for chart
-  const sortedKeys = Object.keys(aggregated).sort();
-  const labels = [];
-  const revenueData = [];
-  const ordersData = [];
-
-  // Format labels based on timeframe
-  sortedKeys.forEach((key) => {
-    let label = key;
-    if (timeframe === "monthly") {
-      const [year, month] = key.split("-");
-      const monthNames = [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec",
-      ];
-      label = `${monthNames[parseInt(month) - 1]} ${year}`;
-    } else if (timeframe === "weekly") {
-      const [year, week] = key.split("-W");
-      label = `Week ${week}, ${year}`;
-    }
-
-    labels.push(label);
-    revenueData.push(aggregated[key].revenue.toFixed(2));
-    ordersData.push(aggregated[key].orders);
-  });
-
-  return { labels, revenueData, ordersData };
-};
-
 // Update chart data
 const updateCharts = () => {
   const { labels, revenueData, ordersData } = aggregateData(
@@ -227,31 +119,9 @@ const updateCharts = () => {
     selectedTimeframe.value
   );
 
-  salesChartData.value = {
-    labels,
-    datasets: [
-      {
-        label: "Revenue",
-        backgroundColor: "rgba(75, 192, 192, 0.2)",
-        borderColor: "rgba(75, 192, 192, 1)",
-        borderWidth: 1,
-        data: revenueData,
-      },
-    ],
-  };
-
-  orderChartData.value = {
-    labels,
-    datasets: [
-      {
-        label: "Orders",
-        backgroundColor: "rgba(153, 102, 255, 0.2)",
-        borderColor: "rgba(153, 102, 255, 1)",
-        borderWidth: 1,
-        data: ordersData,
-      },
-    ],
-  };
+  // Create chart data using utility functions
+  salesChartData.value = createRevenueChartData(labels, revenueData);
+  orderChartData.value = createOrdersChartData(labels, ordersData);
 
   // Calculate totals
   totalRevenue.value = filteredSalesData.value

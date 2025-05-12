@@ -5,9 +5,9 @@ import "./style.css";
 import App from "./App.vue";
 
 // Import pages
-import Dashboard from "./pages/Dashboard/index.vue";
-import Inventory from "./pages/Inventory/index.vue";
-import ProductRegistration from "./pages/ProductRegistration/index.vue";
+import Dashboard from "./views/Dashboard/index.vue";
+import Inventory from "./views/Inventory/index.vue";
+import ProductRegistration from "./views/ProductRegistration/index.vue";
 
 // Define routes
 const routes = [
