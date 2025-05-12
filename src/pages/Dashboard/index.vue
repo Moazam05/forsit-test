@@ -84,7 +84,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import { salesData, categories } from "../../constants/mockData.js";
+import { useInventoryStore } from "../../stores/inventory";
 
 // Register Chart.js components
 ChartJS.register(
@@ -98,6 +98,9 @@ ChartJS.register(
   Legend
 );
 
+// Get store
+const inventoryStore = useInventoryStore();
+
 // State variables
 const selectedTimeframe = ref("monthly");
 const selectedCategory = ref("all");
@@ -106,6 +109,8 @@ const orderChartData = ref(null);
 const totalRevenue = ref(0);
 const totalOrders = ref(0);
 const averageOrderValue = ref(0);
+
+const categories = computed(() => inventoryStore.categories);
 
 // List of timeframes for selector
 const timeframes = [
@@ -128,10 +133,11 @@ const chartOptions = {
 
 // Filter data based on selected category
 const filteredSalesData = computed(() => {
+  const data = inventoryStore.salesData;
   if (selectedCategory.value === "all") {
-    return salesData;
+    return data;
   }
-  return salesData.filter((sale) => sale.category === selectedCategory.value);
+  return data.filter((sale) => sale.category === selectedCategory.value);
 });
 
 // Aggregate data based on timeframe

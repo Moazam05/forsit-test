@@ -190,10 +190,12 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from "vue";
-import { products, categories } from "../../constants/mockData";
+import { useInventoryStore } from "../../stores/inventory";
+
+// Get store
+const inventoryStore = useInventoryStore();
 
 // State variables
-const productsList = ref([...products]);
 const searchQuery = ref("");
 const categoryFilter = ref("all");
 const showLowStockOnly = ref(false);
@@ -202,7 +204,7 @@ const editStockValue = ref(0);
 
 // Filtered products based on search and filters
 const filteredProducts = computed(() => {
-  let filtered = [...products];
+  let filtered = [...inventoryStore.products];
 
   // Apply category filter
   if (categoryFilter.value !== "all") {
@@ -257,8 +259,10 @@ const startEditing = (product) => {
 // Save edited inventory
 const saveInventory = () => {
   if (editingProduct.value) {
-    // In a real app, you would call an API here
-    editingProduct.value.stock = editStockValue.value;
+    inventoryStore.updateProductStock(
+      editingProduct.value.id,
+      editStockValue.value
+    );
     alert(
       `Updated ${editingProduct.value.name} stock to ${editStockValue.value}`
     );
@@ -275,7 +279,7 @@ const cancelEditing = () => {
 const adjustInventory = (product, amount) => {
   const newStock = product.stock + amount;
   if (newStock >= 0) {
-    product.stock = newStock;
+    inventoryStore.updateProductStock(product.id, newStock);
   }
 };
 

@@ -144,7 +144,12 @@
 
 <script setup>
 import { ref, computed } from "vue";
-import { categories } from "../../constants/mockData";
+import { useInventoryStore } from "../../stores/inventory";
+import { useRouter } from "vue-router";
+
+// Get store and router
+const inventoryStore = useInventoryStore();
+const router = useRouter();
 
 // Form state
 const productForm = ref({
@@ -233,13 +238,8 @@ const submitForm = async () => {
   isSubmitting.value = true;
 
   try {
-    // In a real app, you would make an API call here to save the product
-    // For this demo, we'll simulate a successful save after a delay
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
     // Create a new product object
     const newProduct = {
-      id: Math.floor(Math.random() * 10000) + 100, // Generate a random ID
       name: productForm.value.name,
       description: productForm.value.description,
       category: productForm.value.category,
@@ -249,19 +249,22 @@ const submitForm = async () => {
       image: imagePreview.value || "https://via.placeholder.com/150",
     };
 
-    // Here we would add the product to our database
-    // For demo, we'll log it to console
-    console.log("New product registered:", newProduct);
+    // Add the product using the store
+    const addedProduct = inventoryStore.addProduct(newProduct);
 
     // Show success message
     isSuccess.value = true;
-    successMessage.value = `Product "${newProduct.name}" has been successfully added to inventory.`;
+    successMessage.value = `Product "${addedProduct.name}" has been successfully added to inventory.`;
 
     // Reset form after success
     resetForm();
+
+    // After 2 seconds, navigate to inventory page
+    setTimeout(() => {
+      router.push("/inventory");
+    }, 2000);
   } catch (error) {
     console.error("Error saving product:", error);
-    // In a real app, you would handle errors more gracefully
   } finally {
     isSubmitting.value = false;
   }

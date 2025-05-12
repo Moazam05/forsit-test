@@ -1,7 +1,6 @@
 import { createApp } from "vue";
 import { createPinia } from "pinia";
 import { createRouter, createWebHistory } from "vue-router";
-// Custom Imports
 import "./style.css";
 import App from "./App.vue";
 
@@ -13,15 +12,20 @@ import ProductRegistration from "./pages/ProductRegistration/index.vue";
 // Define routes
 const routes = [
   { path: "/", redirect: "/dashboard" },
-  { path: "/dashboard", component: Dashboard },
-  { path: "/inventory", component: Inventory },
-  { path: "/product-registration", component: ProductRegistration },
+  { path: "/dashboard", component: Dashboard, name: "Dashboard" },
+  { path: "/inventory", component: Inventory, name: "Inventory" },
+  {
+    path: "/product-registration",
+    component: ProductRegistration,
+    name: "ProductRegistration",
+  },
 ];
 
 // Create router
 const router = createRouter({
   history: createWebHistory(),
   routes,
+  linkActiveClass: "router-link-active",
 });
 
 // Create Pinia store
