@@ -360,7 +360,7 @@ textarea:focus {
 
 .input-error {
   border-color: #e53e3e !important;
-  background-color: #fff5f5;
+  /* background-color: #fff5f5; */
 }
 
 .error-message {

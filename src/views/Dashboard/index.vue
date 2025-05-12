@@ -30,12 +30,12 @@
     <div class="stats-cards">
       <div class="stat-card">
         <h3>Total Revenue</h3>
-        <p class="value">${{ totalRevenue }}</p>
+        <p class="value">${{ thousandSeparator(totalRevenue) }}</p>
       </div>
 
       <div class="stat-card">
         <h3>Total Orders</h3>
-        <p class="value">{{ totalOrders }}</p>
+        <p class="value">{{ thousandSeparator(totalOrders) }}</p>
       </div>
 
       <div class="stat-card">
@@ -77,6 +77,7 @@ import {
   createOrdersChartData,
   defaultChartOptions,
 } from "../../utils/ChartUtils.js";
+import { thousandSeparator } from "../../utils/index.js";
 
 // Get store
 const inventoryStore = useInventoryStore();
