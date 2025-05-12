@@ -1,128 +1,3 @@
-<script setup>
-import { ref, computed, onMounted, watch } from "vue";
-import { products, categories } from "../../constants/mockData";
-
-// State variables
-const productsList = ref([...products]);
-const searchQuery = ref("");
-const categoryFilter = ref("all");
-const showLowStockOnly = ref(false);
-const editingProduct = ref(null);
-const editStockValue = ref(0);
-
-// Filtered products based on search and filters
-const filteredProducts = computed(() => {
-  let filtered = [...products];
-
-  // Apply category filter
-  if (categoryFilter.value !== "all") {
-    filtered = filtered.filter(
-      (product) => product.category === categoryFilter.value
-    );
-  }
-
-  // Apply search query
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase();
-    filtered = filtered.filter(
-      (product) =>
-        product.name.toLowerCase().includes(query) ||
-        product.description.toLowerCase().includes(query)
-    );
-  }
-
-  // Apply low stock filter
-  if (showLowStockOnly.value) {
-    filtered = filtered.filter(
-      (product) => product.stock <= product.lowStockThreshold
-    );
-  }
-
-  return filtered;
-});
-
-// Count of low stock products
-const lowStockCount = computed(() => {
-  return filteredProducts.value.filter((p) => p.stock <= p.lowStockThreshold)
-    .length;
-});
-
-// Product status
-const getProductStatus = (product) => {
-  if (product.stock <= 0) {
-    return { text: "Out of Stock", class: "out-of-stock" };
-  } else if (product.stock <= product.lowStockThreshold) {
-    return { text: "Low Stock", class: "low-stock" };
-  } else {
-    return { text: "In Stock", class: "in-stock" };
-  }
-};
-
-// Start editing inventory
-const startEditing = (product) => {
-  editingProduct.value = product;
-  editStockValue.value = product.stock;
-};
-
-// Save edited inventory
-const saveInventory = () => {
-  if (editingProduct.value) {
-    // In a real app, you would call an API here
-    editingProduct.value.stock = editStockValue.value;
-    alert(
-      `Updated ${editingProduct.value.name} stock to ${editStockValue.value}`
-    );
-    editingProduct.value = null;
-  }
-};
-
-// Cancel editing
-const cancelEditing = () => {
-  editingProduct.value = null;
-};
-
-// Increase/decrease inventory
-const adjustInventory = (product, amount) => {
-  const newStock = product.stock + amount;
-  if (newStock >= 0) {
-    product.stock = newStock;
-  }
-};
-
-// Sort products
-const sortField = ref("id");
-const sortDirection = ref("asc");
-
-const sortProducts = (field) => {
-  if (sortField.value === field) {
-    // Toggle direction if same field
-    sortDirection.value = sortDirection.value === "asc" ? "desc" : "asc";
-  } else {
-    // New field, default to ascending
-    sortField.value = field;
-    sortDirection.value = "asc";
-  }
-};
-
-const sortedProducts = computed(() => {
-  const sorted = [...filteredProducts.value];
-
-  sorted.sort((a, b) => {
-    let comparison = 0;
-
-    if (a[sortField.value] < b[sortField.value]) {
-      comparison = -1;
-    } else if (a[sortField.value] > b[sortField.value]) {
-      comparison = 1;
-    }
-
-    return sortDirection.value === "asc" ? comparison : -comparison;
-  });
-
-  return sorted;
-});
-</script>
-
 <template>
   <div class="inventory">
     <h2>Inventory Management</h2>
@@ -312,6 +187,131 @@ const sortedProducts = computed(() => {
     </div>
   </div>
 </template>
+
+<script setup>
+import { ref, computed, onMounted, watch } from "vue";
+import { products, categories } from "../../constants/mockData";
+
+// State variables
+const productsList = ref([...products]);
+const searchQuery = ref("");
+const categoryFilter = ref("all");
+const showLowStockOnly = ref(false);
+const editingProduct = ref(null);
+const editStockValue = ref(0);
+
+// Filtered products based on search and filters
+const filteredProducts = computed(() => {
+  let filtered = [...products];
+
+  // Apply category filter
+  if (categoryFilter.value !== "all") {
+    filtered = filtered.filter(
+      (product) => product.category === categoryFilter.value
+    );
+  }
+
+  // Apply search query
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase();
+    filtered = filtered.filter(
+      (product) =>
+        product.name.toLowerCase().includes(query) ||
+        product.description.toLowerCase().includes(query)
+    );
+  }
+
+  // Apply low stock filter
+  if (showLowStockOnly.value) {
+    filtered = filtered.filter(
+      (product) => product.stock <= product.lowStockThreshold
+    );
+  }
+
+  return filtered;
+});
+
+// Count of low stock products
+const lowStockCount = computed(() => {
+  return filteredProducts.value.filter((p) => p.stock <= p.lowStockThreshold)
+    .length;
+});
+
+// Product status
+const getProductStatus = (product) => {
+  if (product.stock <= 0) {
+    return { text: "Out of Stock", class: "out-of-stock" };
+  } else if (product.stock <= product.lowStockThreshold) {
+    return { text: "Low Stock", class: "low-stock" };
+  } else {
+    return { text: "In Stock", class: "in-stock" };
+  }
+};
+
+// Start editing inventory
+const startEditing = (product) => {
+  editingProduct.value = product;
+  editStockValue.value = product.stock;
+};
+
+// Save edited inventory
+const saveInventory = () => {
+  if (editingProduct.value) {
+    // In a real app, you would call an API here
+    editingProduct.value.stock = editStockValue.value;
+    alert(
+      `Updated ${editingProduct.value.name} stock to ${editStockValue.value}`
+    );
+    editingProduct.value = null;
+  }
+};
+
+// Cancel editing
+const cancelEditing = () => {
+  editingProduct.value = null;
+};
+
+// Increase/decrease inventory
+const adjustInventory = (product, amount) => {
+  const newStock = product.stock + amount;
+  if (newStock >= 0) {
+    product.stock = newStock;
+  }
+};
+
+// Sort products
+const sortField = ref("id");
+const sortDirection = ref("asc");
+
+const sortProducts = (field) => {
+  if (sortField.value === field) {
+    // Toggle direction if same field
+    sortDirection.value = sortDirection.value === "asc" ? "desc" : "asc";
+  } else {
+    // New field, default to ascending
+    sortField.value = field;
+    sortDirection.value = "asc";
+  }
+};
+
+const sortedProducts = computed(() => {
+  const sorted = [...filteredProducts.value];
+
+  sorted.sort((a, b) => {
+    let comparison = 0;
+
+    if (a[sortField.value] < b[sortField.value]) {
+      comparison = -1;
+    } else if (a[sortField.value] > b[sortField.value]) {
+      comparison = 1;
+    }
+
+    return sortDirection.value === "asc" ? comparison : -comparison;
+  });
+
+  return sorted;
+});
+</script>
 
 <style>
 .inventory {

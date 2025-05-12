@@ -1,3 +1,147 @@
+<template>
+  <div class="product-registration">
+    <h2>Product Registration</h2>
+
+    <div class="form-container">
+      <!-- Success message -->
+      <div v-if="isSuccess" class="success-message">
+        <div class="success-content">
+          <p>{{ successMessage }}</p>
+          <button @click="dismissSuccess" class="btn-dismiss">Dismiss</button>
+        </div>
+      </div>
+
+      <form @submit.prevent="submitForm" class="product-form">
+        <div class="form-group">
+          <label for="product-name">Product Name*</label>
+          <input
+            type="text"
+            id="product-name"
+            v-model="productForm.name"
+            :class="{ 'input-error': errors.name }"
+          />
+          <p v-if="errors.name" class="error-message">{{ errors.name }}</p>
+        </div>
+
+        <div class="form-group">
+          <label for="product-description">Description*</label>
+          <textarea
+            id="product-description"
+            v-model="productForm.description"
+            rows="4"
+            :class="{ 'input-error': errors.description }"
+          ></textarea>
+          <p v-if="errors.description" class="error-message">
+            {{ errors.description }}
+          </p>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="product-category">Category*</label>
+            <select
+              id="product-category"
+              v-model="productForm.category"
+              :class="{ 'input-error': errors.category }"
+            >
+              <option value="">Select a category</option>
+              <option
+                v-for="category in categories"
+                :key="category"
+                :value="category"
+              >
+                {{ category }}
+              </option>
+            </select>
+            <p v-if="errors.category" class="error-message">
+              {{ errors.category }}
+            </p>
+          </div>
+
+          <div class="form-group">
+            <label for="product-price">Price ($)*</label>
+            <input
+              type="number"
+              id="product-price"
+              v-model="productForm.price"
+              min="0.01"
+              step="0.01"
+              :class="{ 'input-error': errors.price }"
+            />
+            <p v-if="errors.price" class="error-message">{{ errors.price }}</p>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="product-stock">Initial Stock*</label>
+            <input
+              type="number"
+              id="product-stock"
+              v-model="productForm.stock"
+              min="0"
+              step="1"
+              :class="{ 'input-error': errors.stock }"
+            />
+            <p v-if="errors.stock" class="error-message">{{ errors.stock }}</p>
+          </div>
+
+          <div class="form-group">
+            <label for="product-threshold">Low Stock Threshold*</label>
+            <input
+              type="number"
+              id="product-threshold"
+              v-model="productForm.lowStockThreshold"
+              min="1"
+              step="1"
+              :class="{ 'input-error': errors.lowStockThreshold }"
+            />
+            <p v-if="errors.lowStockThreshold" class="error-message">
+              {{ errors.lowStockThreshold }}
+            </p>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="product-image">Product Image</label>
+          <div class="image-upload-container">
+            <input
+              type="file"
+              id="product-image"
+              @change="handleImageSelect"
+              accept="image/*"
+            />
+
+            <div v-if="imagePreview" class="image-preview-container">
+              <img
+                :src="imagePreview"
+                alt="Product preview"
+                class="image-preview"
+              />
+              <button
+                type="button"
+                @click="clearImage"
+                class="btn-remove-image"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" @click="resetForm" class="btn-reset">
+            Reset
+          </button>
+          <button type="submit" class="btn-submit" :disabled="isSubmitting">
+            {{ isSubmitting ? "Submitting..." : "Add Product" }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</template>
+
 <script setup>
 import { ref, computed } from "vue";
 import { categories } from "../../constants/mockData";
@@ -144,150 +288,6 @@ const dismissSuccess = () => {
   successMessage.value = "";
 };
 </script>
-
-<template>
-  <div class="product-registration">
-    <h2>Product Registration</h2>
-
-    <div class="form-container">
-      <!-- Success message -->
-      <div v-if="isSuccess" class="success-message">
-        <div class="success-content">
-          <p>{{ successMessage }}</p>
-          <button @click="dismissSuccess" class="btn-dismiss">Dismiss</button>
-        </div>
-      </div>
-
-      <form @submit.prevent="submitForm" class="product-form">
-        <div class="form-group">
-          <label for="product-name">Product Name*</label>
-          <input
-            type="text"
-            id="product-name"
-            v-model="productForm.name"
-            :class="{ 'input-error': errors.name }"
-          />
-          <p v-if="errors.name" class="error-message">{{ errors.name }}</p>
-        </div>
-
-        <div class="form-group">
-          <label for="product-description">Description*</label>
-          <textarea
-            id="product-description"
-            v-model="productForm.description"
-            rows="4"
-            :class="{ 'input-error': errors.description }"
-          ></textarea>
-          <p v-if="errors.description" class="error-message">
-            {{ errors.description }}
-          </p>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label for="product-category">Category*</label>
-            <select
-              id="product-category"
-              v-model="productForm.category"
-              :class="{ 'input-error': errors.category }"
-            >
-              <option value="">Select a category</option>
-              <option
-                v-for="category in categories"
-                :key="category"
-                :value="category"
-              >
-                {{ category }}
-              </option>
-            </select>
-            <p v-if="errors.category" class="error-message">
-              {{ errors.category }}
-            </p>
-          </div>
-
-          <div class="form-group">
-            <label for="product-price">Price ($)*</label>
-            <input
-              type="number"
-              id="product-price"
-              v-model="productForm.price"
-              min="0.01"
-              step="0.01"
-              :class="{ 'input-error': errors.price }"
-            />
-            <p v-if="errors.price" class="error-message">{{ errors.price }}</p>
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label for="product-stock">Initial Stock*</label>
-            <input
-              type="number"
-              id="product-stock"
-              v-model="productForm.stock"
-              min="0"
-              step="1"
-              :class="{ 'input-error': errors.stock }"
-            />
-            <p v-if="errors.stock" class="error-message">{{ errors.stock }}</p>
-          </div>
-
-          <div class="form-group">
-            <label for="product-threshold">Low Stock Threshold*</label>
-            <input
-              type="number"
-              id="product-threshold"
-              v-model="productForm.lowStockThreshold"
-              min="1"
-              step="1"
-              :class="{ 'input-error': errors.lowStockThreshold }"
-            />
-            <p v-if="errors.lowStockThreshold" class="error-message">
-              {{ errors.lowStockThreshold }}
-            </p>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="product-image">Product Image</label>
-          <div class="image-upload-container">
-            <input
-              type="file"
-              id="product-image"
-              @change="handleImageSelect"
-              accept="image/*"
-            />
-
-            <div v-if="imagePreview" class="image-preview-container">
-              <img
-                :src="imagePreview"
-                alt="Product preview"
-                class="image-preview"
-              />
-              <button
-                type="button"
-                @click="clearImage"
-                class="btn-remove-image"
-              >
-                Remove
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div class="form-actions">
-          <button type="button" @click="resetForm" class="btn-reset">
-            Reset
-          </button>
-          <button type="submit" class="btn-submit" :disabled="isSubmitting">
-            {{ isSubmitting ? "Submitting..." : "Add Product" }}
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-</template>
 
 <style>
 .product-registration {
