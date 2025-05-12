@@ -1,0 +1,358 @@
+<template>
+  <div class="dashboard">
+    <h2>Revenue Analysis</h2>
+
+    <div class="filters">
+      <div class="filter">
+        <label for="timeframe">Timeframe:</label>
+        <select id="timeframe" v-model="selectedTimeframe">
+          <option v-for="tf in timeframes" :key="tf.value" :value="tf.value">
+            {{ tf.label }}
+          </option>
+        </select>
+      </div>
+
+      <div class="filter">
+        <label for="category">Category:</label>
+        <select id="category" v-model="selectedCategory">
+          <option value="all">All Categories</option>
+          <option
+            v-for="category in categories"
+            :key="category"
+            :value="category"
+          >
+            {{ category }}
+          </option>
+        </select>
+      </div>
+    </div>
+
+    <div class="stats-cards">
+      <div class="stat-card">
+        <h3>Total Revenue</h3>
+        <p class="value">${{ totalRevenue }}</p>
+      </div>
+
+      <div class="stat-card">
+        <h3>Total Orders</h3>
+        <p class="value">{{ totalOrders }}</p>
+      </div>
+
+      <div class="stat-card">
+        <h3>Average Order Value</h3>
+        <p class="value">${{ averageOrderValue }}</p>
+      </div>
+    </div>
+
+    <div class="charts">
+      <div class="chart-container">
+        <h3>Revenue Trends</h3>
+        <div style="width: 100%; height: 300px">
+          <Line
+            v-if="salesChartData"
+            :data="salesChartData"
+            :options="chartOptions"
+          />
+        </div>
+      </div>
+
+      <div class="chart-container">
+        <h3>Order Trends</h3>
+        <div style="width: 100%; height: 300px">
+          <Bar
+            v-if="orderChartData"
+            :data="orderChartData"
+            :options="chartOptions"
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, onMounted, watch } from "vue";
+import { Line, Bar } from "vue-chartjs";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
+import { salesData, categories } from "../../constants/mockData.js";
+
+// Register Chart.js components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
+
+// State variables
+const selectedTimeframe = ref("monthly");
+const selectedCategory = ref("all");
+const salesChartData = ref(null);
+const orderChartData = ref(null);
+const totalRevenue = ref(0);
+const totalOrders = ref(0);
+const averageOrderValue = ref(0);
+
+// List of timeframes for selector
+const timeframes = [
+  { value: "daily", label: "Daily" },
+  { value: "weekly", label: "Weekly" },
+  { value: "monthly", label: "Monthly" },
+  { value: "annually", label: "Annually" },
+];
+
+// Common chart options
+const chartOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  scales: {
+    y: {
+      beginAtZero: true,
+    },
+  },
+};
+
+// Filter data based on selected category
+const filteredSalesData = computed(() => {
+  if (selectedCategory.value === "all") {
+    return salesData;
+  }
+  return salesData.filter((sale) => sale.category === selectedCategory.value);
+});
+
+// Aggregate data based on timeframe
+const aggregateData = (data, timeframe) => {
+  const aggregated = {};
+
+  data.forEach((sale) => {
+    const date = new Date(sale.date);
+    let key = "";
+
+    switch (timeframe) {
+      case "daily":
+        key = `${date.getFullYear()}-${(date.getMonth() + 1)
+          .toString()
+          .padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}`;
+        break;
+      case "weekly":
+        // Get the week number
+        const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+        const pastDaysOfYear = (date - firstDayOfYear) / 86400000;
+        const weekNum = Math.ceil(
+          (pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7
+        );
+        key = `${date.getFullYear()}-W${weekNum}`;
+        break;
+      case "monthly":
+        key = `${date.getFullYear()}-${(date.getMonth() + 1)
+          .toString()
+          .padStart(2, "0")}`;
+        break;
+      case "annually":
+        key = `${date.getFullYear()}`;
+        break;
+    }
+
+    if (!aggregated[key]) {
+      aggregated[key] = { revenue: 0, orders: 0 };
+    }
+
+    aggregated[key].revenue += sale.revenue;
+    aggregated[key].orders += sale.quantity;
+  });
+
+  // Sort keys and create arrays for chart
+  const sortedKeys = Object.keys(aggregated).sort();
+  const labels = [];
+  const revenueData = [];
+  const ordersData = [];
+
+  // Format labels based on timeframe
+  sortedKeys.forEach((key) => {
+    let label = key;
+    if (timeframe === "monthly") {
+      const [year, month] = key.split("-");
+      const monthNames = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ];
+      label = `${monthNames[parseInt(month) - 1]} ${year}`;
+    } else if (timeframe === "weekly") {
+      const [year, week] = key.split("-W");
+      label = `Week ${week}, ${year}`;
+    }
+
+    labels.push(label);
+    revenueData.push(aggregated[key].revenue.toFixed(2));
+    ordersData.push(aggregated[key].orders);
+  });
+
+  return { labels, revenueData, ordersData };
+};
+
+// Update chart data
+const updateCharts = () => {
+  const { labels, revenueData, ordersData } = aggregateData(
+    filteredSalesData.value,
+    selectedTimeframe.value
+  );
+
+  salesChartData.value = {
+    labels,
+    datasets: [
+      {
+        label: "Revenue",
+        backgroundColor: "rgba(75, 192, 192, 0.2)",
+        borderColor: "rgba(75, 192, 192, 1)",
+        borderWidth: 1,
+        data: revenueData,
+      },
+    ],
+  };
+
+  orderChartData.value = {
+    labels,
+    datasets: [
+      {
+        label: "Orders",
+        backgroundColor: "rgba(153, 102, 255, 0.2)",
+        borderColor: "rgba(153, 102, 255, 1)",
+        borderWidth: 1,
+        data: ordersData,
+      },
+    ],
+  };
+
+  // Calculate totals
+  totalRevenue.value = filteredSalesData.value
+    .reduce((sum, sale) => sum + sale.revenue, 0)
+    .toFixed(2);
+  totalOrders.value = filteredSalesData.value.reduce(
+    (sum, sale) => sum + sale.quantity,
+    0
+  );
+
+  if (totalOrders.value > 0) {
+    averageOrderValue.value = (totalRevenue.value / totalOrders.value).toFixed(
+      2
+    );
+  } else {
+    averageOrderValue.value = 0;
+  }
+};
+
+// Watch for changes in timeframe or category
+watch([selectedTimeframe, selectedCategory], () => {
+  updateCharts();
+});
+
+// Initialize on component mount
+onMounted(() => {
+  updateCharts();
+});
+</script>
+
+<style scoped>
+.dashboard {
+  background-color: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+h2 {
+  margin-bottom: 1.5rem;
+  color: #333;
+}
+
+.filters {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.filter {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+select {
+  padding: 0.5rem;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+}
+
+.stats-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.stat-card {
+  background-color: #f9f9f9;
+  border-radius: 6px;
+  padding: 1rem;
+  text-align: center;
+}
+
+.stat-card h3 {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 0.5rem;
+}
+
+.stat-card .value {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #333;
+}
+
+.charts {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+.chart-container {
+  background-color: #f9f9f9;
+  border-radius: 6px;
+  padding: 1rem;
+}
+
+.chart-container h3 {
+  margin-bottom: 1rem;
+  color: #555;
+}
+
+@media (min-width: 768px) {
+  .charts {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+</style>

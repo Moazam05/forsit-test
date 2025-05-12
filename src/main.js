@@ -6,7 +6,7 @@ import "./style.css";
 import App from "./App.vue";
 
 // Import pages
-import Dashboard from "./pages/Dashboard.vue";
+import Dashboard from "./pages/Dashboard/index.vue";
 import Inventory from "./pages/Inventory.vue";
 import ProductRegistration from "./pages/ProductRegistration.vue";
 
