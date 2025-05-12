@@ -202,6 +202,8 @@ const showLowStockOnly = ref(false);
 const editingProduct = ref(null);
 const editStockValue = ref(0);
 
+const categories = computed(() => inventoryStore.categories);
+
 // Filtered products based on search and filters
 const filteredProducts = computed(() => {
   let filtered = [...inventoryStore.products];

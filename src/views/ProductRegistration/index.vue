@@ -162,6 +162,8 @@ const productForm = ref({
   image: null,
 });
 
+const categories = computed(() => inventoryStore.categories);
+
 // Error state
 const errors = ref({});
 
