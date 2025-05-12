@@ -7,7 +7,7 @@ import App from "./App.vue";
 
 // Import pages
 import Dashboard from "./pages/Dashboard/index.vue";
-import Inventory from "./pages/Inventory.vue";
+import Inventory from "./pages/Inventory/index.vue";
 import ProductRegistration from "./pages/ProductRegistration.vue";
 
 // Define routes
